@@ -23,7 +23,7 @@ from utility import pad_matrix_even, unpad_matrix, get_random_matrix_pair_any_si
 def matrice_inverse(a):
     if np.size(a[0]) == 1:
         
-        return np.array([[1 / a[0, 0]]])
+        return a if a[0,0]==0 else np.array([[1 / a[0, 0]]])
     original_shape = a.shape
     a = pad_matrix_even(a)
 
@@ -47,7 +47,7 @@ def matrice_inverse(a):
     return unpad_matrix(np.vstack((np.hstack((b11, b12)), np.hstack((b21, b22)))), original_shape)
     
 
-A,_ = get_random_matrix_pair_any_size(8)
+A,_ = get_random_matrix_pair_any_size(11)
 print(A)
 A_inv = matrice_inverse(A)
 print(A_inv)
