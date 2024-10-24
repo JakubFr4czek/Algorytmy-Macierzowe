@@ -13,17 +13,22 @@ import sys
 import os
 
 # Dodaj ścieżkę katalogu wyżej (parent directory) do sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Teraz możesz zaimportować moduł z katalogu wyżej
 
-from utility import pad_matrix_even, unpad_matrix, get_random_matrix_pair_any_size, pad_matrix_to_nxn_shape
+from utility import (
+    pad_matrix_even,
+    unpad_matrix,
+    get_random_matrix_pair_any_size,
+    
+)
 
 
-def matrice_inverse(a):
+def recursive_inverse(a):
     if np.size(a[0]) == 1:
-        
-        return a if a[0,0]==0 else np.array([[1 / a[0, 0]]])
+
+        return a if a[0, 0] == 0 else np.array([[1 / a[0, 0]]])
     original_shape = a.shape
     a = pad_matrix_even(a)
 
@@ -35,20 +40,34 @@ def matrice_inverse(a):
     a21 = a[mid:, :mid]
     a22 = a[mid:, mid:]
 
-    a11inv = matrice_inverse(a11)
+    a11inv = recursive_inverse(a11)
     s22 = a22 - np.linalg.multi_dot([a21, a11inv, a12])
-    s22inv = matrice_inverse(s22)
+    s22inv = recursive_inverse(s22)
 
     b11 = a11inv + np.linalg.multi_dot([a11inv, a12, s22inv, a21, a11inv])
     b12 = -np.linalg.multi_dot([a11inv, a12, s22inv])
     b21 = -np.linalg.multi_dot([s22inv, a21, a11inv])
     b22 = s22inv
 
-    return unpad_matrix(np.vstack((np.hstack((b11, b12)), np.hstack((b21, b22)))), original_shape)
-    
+    return unpad_matrix(
+        np.vstack((np.hstack((b11, b12)), np.hstack((b21, b22)))), original_shape
+    )
 
-A,_ = get_random_matrix_pair_any_size(11)
+
+def recursive_Gauss():
+    pass
+
+
+def recursive_LU():
+    pass
+
+
+def recursive_determinant():
+    pass
+
+
+A, _ = get_random_matrix_pair_any_size(11)
 print(A)
-A_inv = matrice_inverse(A)
+A_inv = recursive_inverse(A)
 print(A_inv)
-print(np.dot(A,A_inv))
+print(np.dot(A, A_inv))
