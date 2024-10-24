@@ -35,6 +35,21 @@ def pad_matrix_even(m):
         m = np.hstack((m, np.zeros(shape=(m.shape[0], 1))))
         
     return m
+def pad_matrix_to_nxn_shape(m,n):
+    
+    
+    rows, cols = m.shape
+    
+    
+    padded_matrix = np.zeros((n, n))
+    
+    
+    padded_matrix[:rows, :cols] = m
+    
+    return padded_matrix
+    
+        
+    
     
 
 def unpad_matrix(m, prev_shape):
