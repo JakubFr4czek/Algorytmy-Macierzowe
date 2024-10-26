@@ -54,20 +54,47 @@ def recursive_inverse(a):
     )
 
 
-def recursive_Gauss():
+def recursive_Gauss(a):
+    
     pass
 
 
-def recursive_LU():
-    pass
+def recursive_LU(a):
+    if np.size(a[0]) == 1:
+
+        return np.array([[1]]), a
+    original_shape = a.shape
+    a = pad_matrix_even(a)
+
+    n = np.size(a[0])
+    mid = n // 2
+
+    a11 = a[:mid, :mid]
+    a12 = a[:mid, mid:]
+    a21 = a[mid:, :mid]
+    a22 = a[mid:, mid:]
+
+    l11, u11 = recursive_LU(a11)
+    u11inv = recursive_inverse(u11)
+    l21 = np.dot(a21, u11inv)
+    l11inv = recursive_inverse(l11)
+    u12 = np.dot(l11inv, a12)
+    s = a22 - np.linalg.multi_dot([a21,u11inv,l11inv,a12])
+    l22,u22 = recursive_LU(s)
+    l = unpad_matrix(np.vstack((np.hstack((l11, np.zeros(l11.shape))), np.hstack((l21, l22)))), original_shape)
+    u = unpad_matrix(np.vstack((np.hstack((u11, u12)), np.hstack((np.zeros(l11.shape), u22)))), original_shape)
+    return l,u
+    
 
 
 def recursive_determinant():
     pass
 
 
-A, _ = get_random_matrix_pair_any_size(11)
-print(A)
-A_inv = recursive_inverse(A)
-print(A_inv)
-print(np.dot(A, A_inv))
+A, _ = get_random_matrix_pair_any_size(4)
+print(A,'\n')
+#A_inv = recursive_inverse(A)
+l,u = recursive_LU(A)
+print(np.dot(l,u))
+
+#print(np.dot(A, A_inv))
