@@ -1,0 +1,326 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage[polish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{minted}
+\graphicspath{{./images/}}
+
+\title{Algorytmy macierzowe - Drugi zestaw zadań}
+\author{Jakub Frączek \and Kacper Garus}
+
+\begin{document}
+
+\sloppy
+
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+\section{Wstęp}
+
+Tematem zadania było wygenerowanie losowych macierzy o wartościach z przedziału otwartego \((0.00000001, 1.0)\), a następnie zaimplementowanie algorytmów:
+
+\begin{enumerate}
+    \item Rekurencyjnego odwracania macierzy
+    \item Rekurencyjnej LU faktoryzacji
+    \item Rekurencyjnej eliminacji Gaussa
+    \item Rekurencyjnego liczenia wyznacznika
+\end{enumerate}
+
+
+Następnie zliczyć liczbę operacji zmienno-przecinkowych dokonaną podczas mnożenia macierzy. Algorytmy miały zostać zaprojektowane tak, aby przyjmować macierze o dowolnych wymiarach.
+
+\section{Rekurencyjne odwracanie macierzy}
+
+\subsection{Pseudokod}
+
+\begin{minted}[bgcolor=white]{python}
+Funkcja inverse(A)
+    Jeżeli rozmiar(A) == 1
+        Jeżeli A == 0
+            Zwroć 0
+        W przeciwnym wypadku
+            Zwróć 1/A
+
+    S = kształt macierzy A
+
+    A = macierz A uzupełniona do parzystego kształtu zerami
+
+    środek = dzielenie_całkowite(rozmiar(A[0]), 2) 
+    
+    a11 = Wiersze od 0 do środek, Kolumny od 0 do środek z macierzy A
+    a12 = Wiersze od 0 do środek, Kolumny od środek do n z macierzy A
+    a21 = Wiersze od środek do n, Kolumny od 0 do środek z macierzy A
+    a22 = Wiersze od środek do n, Kolumny od środek do n z macierzy A
+    
+    a11_inv = inverse(a11)
+    s22 = a22 - a21*a11_inv*a12
+    s22_inv = inverse(s22)
+
+    c11 = a11_inv + a11_inv * a12 * s22_inv * a21 * a11_inv
+    c12 = -a11_inv * a12 * s22_inv
+    c21 = -s22_inv * a21 * a11_inv
+    c22 = s22_inv
+
+    C = złóż macierz z c11, c12, c21, c22
+
+    C = macierz C przycięta do kształtu S
+
+    Zwróć macierz C
+\end{minted}
+
+\subsection{Implementacja}
+
+Algorytm postanowiliśmy zaimplementować w języku Python:
+
+\begin{minted}[bgcolor=white]{python}
+def recursive_inverse(a):
+    if np.size(a[0]) == 1:
+
+        return a if a[0, 0] == 0 else np.array([[1 / a[0, 0]]])
+    original_shape = a.shape
+    a = pad_matrix_even(a)
+
+    n = np.size(a[0])
+    mid = n // 2
+
+    a11 = a[:mid, :mid]
+    a12 = a[:mid, mid:]
+    a21 = a[mid:, :mid]
+    a22 = a[mid:, mid:]
+
+    a11inv = recursive_inverse(a11)
+    s22 = a22 - strassen(strassen(a21, a11inv), a12)
+    s22inv = recursive_inverse(s22)
+
+    b11 = a11inv + strassen(
+        strassen(strassen(strassen(a11inv, a12), s22inv), a21), a11inv
+    )
+    b12 = -strassen(strassen(a11inv, a12), s22inv)
+    b21 = -strassen(strassen(s22inv, a21), a11inv)
+    b22 = s22inv
+
+    return unpad_matrix(
+        np.vstack((np.hstack((b11, b12)), np.hstack((b21, b22)))), original_shape
+    )
+\end{minted}
+
+\section{Rekurencyjna LU faktoryzacja}
+
+\subsection{Pseudokod}
+
+\begin{minted}[bgcolor=white]{python}
+Funkcja LU(A)
+    Jeżeli rozmiar(A) == 1
+        Zwróć 1, a
+
+    S = kształt macierzy A
+
+    A = macierz A uzupełniona do parzystego kształtu zerami
+
+    środek = dzielenie_całkowite(rozmiar(A[0]), 2) 
+    
+    a11 = Wiersze od 0 do środek, Kolumny od 0 do środek z macierzy A
+    a12 = Wiersze od 0 do środek, Kolumny od środek do n z macierzy A
+    a21 = Wiersze od środek do n, Kolumny od 0 do środek z macierzy A
+    a22 = Wiersze od środek do n, Kolumny od środek do n z macierzy A
+    
+    l11, u11 = LU(a11)
+    u11_inv = inverse(u11)
+    l21 = a21 * u11_inv
+    l11_inv = inverse(l11)
+    u12 = l11_inv * a12
+    s = a22 - a21 * u11_inv * l11_inv * a12
+    l22, u22 = LU(s)
+    l12 = macierz zer w kształcie macierzy a11
+    u21 = macierz zer w kształcie macierzy a11
+
+    L = złóż macierz z l11, l12, l21, l22 i przytnij ją do kształtu S
+    U = złóż macierz z u11, u12, u21, u22 i przytnij ją do kształtu S
+    
+    Zwróć L, U
+\end{minted}
+
+\subsection{Implementacja}
+
+Algorytm LU faktoryzacji również został zaimplementowany w języku Python:
+
+\begin{minted}[bgcolor=white]{python}
+def recursive_LU(a):
+    if np.size(a[0]) == 1:
+
+        return np.array([[1]]), a
+    original_shape = a.shape
+    a = pad_matrix_even(a)
+
+    n = np.size(a[0])
+    mid = n // 2
+
+    a11 = a[:mid, :mid]
+    a12 = a[:mid, mid:]
+    a21 = a[mid:, :mid]
+    a22 = a[mid:, mid:]
+
+    l11, u11 = recursive_LU(a11)
+    u11inv = recursive_inverse(u11)
+    l21 = strassen(a21, u11inv)
+    l11inv = recursive_inverse(l11)
+    u12 = strassen(l11inv, a12)
+    s = a22 - strassen(strassen(strassen(a21, u11inv), l11inv), a12)
+    l22, u22 = recursive_LU(s)
+    l = unpad_matrix(
+        np.vstack((np.hstack((l11, np.zeros(l11.shape))), np.hstack((l21, l22)))),
+        original_shape,
+    )
+    u = unpad_matrix(
+        np.vstack((np.hstack((u11, u12)), np.hstack((np.zeros(l11.shape), u22)))),
+        original_shape,
+    )
+    return l, u
+\end{minted}
+
+\section{Rekurencyjna eliminacja Gaussa}
+\subsection{Pseudokod}
+
+\begin{minted}[bgcolor=white]{python}
+Funkcja Gauss(A, b)
+    SA = kształt macierzy A
+
+    A = macierz A uzupełniona do parzystego kształtu zerami
+
+    środek = dzielenie_całkowite(rozmiar(A[0]), 2) 
+    
+    a11 = Wiersze od 0 do środek, Kolumny od 0 do środek z macierzy A
+    a12 = Wiersze od 0 do środek, Kolumny od środek do n z macierzy A
+    a21 = Wiersze od środek do n, Kolumny od 0 do środek z macierzy A
+    a22 = Wiersze od środek do n, Kolumny od środek do n z macierzy A
+
+    Sb = kształt wektora b
+
+    b = wektor b uzupełniony do parzystej długości zerami
+
+    b1 = wektor b od początku do środka
+    b2 = wektor b od środka do końca
+
+    l11, u11 = LU(a11)
+    l11_inv = inverse(l11)
+    u11_inv = inverse(u11)
+    s = a22 - a21 * u11_inv * l11_inv * a12
+    ls, us = LU(s)
+    ls_inv = inverse(ls)
+
+    c11 = u11
+    c12 = l11_inv * a12
+    c21 = macierz zer w kształcie macierzy a11
+    c22 = us
+
+    LHS = złóż macierz z c11, c12, c21, c22 i przytnij ją do kształtu SA
+
+    RHS1 = l11_inv * b1
+    RHS2 = ls_inv * b2 - ls_inv * a21 * u11_inv * l11_inv * b1
+
+    RHS = złóż wektor z wektorów RHS1 i RHS2,  przytnij go do kształtu Sb
+
+    Zwróć LHS, RHS
+\end{minted}
+
+\subsection{Implementacja}
+
+Algorytm eliminacji Gaussa również został zaimplementowany w języku Python:
+
+\begin{minted}[bgcolor=white]{python}
+def recursive_Gauss(a, b):
+
+    original_shape_a = a.shape
+    a = pad_matrix_even(a)
+    n = np.size(a[0])
+    mid = n // 2
+
+    a11 = a[:mid, :mid]
+    a12 = a[:mid, mid:]
+    a21 = a[mid:, :mid]
+    a22 = a[mid:, mid:]
+
+    original_shape_b = b.shape
+
+    b = pad_vector_even(b)
+
+    b1 = b[:mid]
+    b2 = b[mid:]
+
+    l11, u11 = recursive_LU(a11)
+    l11inv = recursive_inverse(l11)
+    u11inv = recursive_inverse(u11)
+    s = a22 - strassen(strassen(strassen(a21, u11inv), l11inv), a12)
+    ls, us = recursive_LU(s)
+    lsinv = recursive_inverse(ls)
+
+    c11 = u11
+    c12 = strassen(l11inv, a12)
+    c21 = np.zeros(c12.shape)
+    c22 = us
+
+    lhs = unpad_matrix(
+        np.vstack((np.hstack((c11, c12)), np.hstack((c21, c22)))), original_shape_a
+    )
+
+    rhs1 = matrice_vector_mult(l11inv, b1)
+    rhs2 = matrice_vector_mult(lsinv, b2) - matrice_vector_mult(
+        strassen(strassen(strassen(lsinv, a21), u11inv), l11inv), b1
+    )
+
+    rhs = unpad_vector(np.hstack((rhs1, rhs2)), original_shape_b)
+
+    return lhs, rhs
+\end{minted}
+
+\section{Rekurencyjne liczenie wyznacznika macierzy}
+\subsection{Pseudokod}
+
+\begin{minted}[bgcolor=white]{python}
+Funkcja determinant(A)
+    L, U = LU(A)
+    det = 1
+    Dla u = element przekątnej macierzy U
+        det = det * u
+    Zwróć det
+        
+\end{minted}
+
+\subsection{Implementacja}
+
+Algorytm eliminacji Gaussa również został zaimplementowany w języku Python:
+
+\begin{minted}[bgcolor=white]{python}
+def recursive_determinant(a):
+    l,u=recursive_LU(a)
+    det=1
+    for i in range(u.shape[0]):
+        det*=u[i,i]
+    return det
+
+\end{minted}
+
+
+
+
+
+\section{Oszacowanie złożoności obliczeniowej}
+
+
+\section{Porównanie wyników z Octave}
+
+
+
+\section{Wnioski}
+
+
+
+\section{Źródła}
+
+
+
+\end{document}

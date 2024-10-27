@@ -45,17 +45,13 @@ def recursive_inverse(a):
     a22 = a[mid:, mid:]
 
     a11inv = recursive_inverse(a11)
-    # s22 = a22 - np.linalg.multi_dot([a21, a11inv, a12])
     s22 = a22 - strassen(strassen(a21, a11inv), a12)
     s22inv = recursive_inverse(s22)
 
-    # b11 = a11inv + np.linalg.multi_dot([a11inv, a12, s22inv, a21, a11inv])
     b11 = a11inv + strassen(
         strassen(strassen(strassen(a11inv, a12), s22inv), a21), a11inv
     )
-    # b12 = -np.linalg.multi_dot([a11inv, a12, s22inv])
     b12 = -strassen(strassen(a11inv, a12), s22inv)
-    # b21 = -np.linalg.multi_dot([s22inv, a21, a11inv])
     b21 = -strassen(strassen(s22inv, a21), a11inv)
     b22 = s22inv
 
@@ -81,10 +77,9 @@ def recursive_LU(a):
 
     l11, u11 = recursive_LU(a11)
     u11inv = recursive_inverse(u11)
-    l21 = np.dot(a21, u11inv)
+    l21 = strassen(a21, u11inv)
     l11inv = recursive_inverse(l11)
-    u12 = np.dot(l11inv, a12)
-    # s = a22 - np.linalg.multi_dot([a21,u11inv,l11inv,a12])
+    u12 = strassen(l11inv, a12)
     s = a22 - strassen(strassen(strassen(a21, u11inv), l11inv), a12)
     l22, u22 = recursive_LU(s)
     l = unpad_matrix(
@@ -111,7 +106,6 @@ def recursive_Gauss(a, b):
     a22 = a[mid:, mid:]
 
     original_shape_b = b.shape
-    print(b)
 
     b = pad_vector_even(b)
 
