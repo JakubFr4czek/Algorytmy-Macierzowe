@@ -1,4 +1,11 @@
 import numpy as np
+import sys
+import os
+
+# Dodaj ścieżkę katalogu wyżej (parent directory) do sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Teraz możesz zaimportować moduł z katalogu wyżej
 from utility import pad_matrix_even, unpad_matrix
 
 
