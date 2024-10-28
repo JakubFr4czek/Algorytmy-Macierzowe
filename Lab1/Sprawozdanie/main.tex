@@ -21,7 +21,7 @@
 
 \section{Wstęp}
 
-Tematem zadania było wygenerowalnie losowych macierzy o wartościach z przedziału otwartego \((0.00000001, 1.0)\), a następnie zaimplementowanie algorytmów:
+Tematem zadania było wygenerowanie losowych macierzy o wartościach z przedziału otwartego \((0.00000001, 1.0)\), a następnie zaimplementowanie algorytmów:
 
 \begin{enumerate}
     \item Rekurencyjnego mnożenia macierzy metodą Binét’a
@@ -76,6 +76,11 @@ Funkcja Binet(A, B)
     Jeżeli rozmiar(A) == 1
         Zwróć A * B
 
+    S = kształt macierzy A
+
+    A = macierz A uzupełniona do parzystego kształtu
+    B = macierz B uzupełniona do parzystego kształtu
+
     środek = dzielenie_całkowite(rozmiar(A[0]), 2) 
     
     a11 = Wiersze od 0 do środek, Kolumny od 0 do środek z macierzy A
@@ -93,7 +98,11 @@ Funkcja Binet(A, B)
     c21 = Binet(a21, b11) + Binet(a22, b21)
     c22 = Binet(a21, b12) + Binet(a22, b22)
 
-    Zwróć macierz C złożoną z c11, c12, c21, c22
+    C = złóż macierz z c11, c12, c21, c22
+
+    C = macierz C przycięta do kształtu S
+
+    Zwróć macierz C
 \end{minted}
 
 \subsection{Implementacja}
@@ -102,10 +111,15 @@ Algorytm postanowiliśmy zaimplementować w języku Python:
 
 \begin{minted}[bgcolor=white]{python}
 def binet(a,b):
-    
-    if np.size(a)==1:
+    if np.size(a[0])==1:
         return a*b
-    n=np.size(a[0])
+    
+    original_shape = a.shape
+    
+    a = pad_matrix_even(a)
+    b = pad_matrix_even(b)
+    
+    n = np.size(a[0])
     mid=n//2
     
     a11=a[:mid,:mid]
@@ -122,7 +136,7 @@ def binet(a,b):
     c21=binet(a21, b11)+binet(a22, b21)
     c22=binet(a21, b12)+binet(a22, b22)
 
-    return np.vstack((np.hstack((c11,c12)),np.hstack((c21,c22))))
+    return unpad_matrix(np.vstack((np.hstack((c11,c12)),np.hstack((c21,c22)))), original_shape)
 \end{minted}
 
 \section{Metoda Strassena}
@@ -171,6 +185,11 @@ Funkcja Binet(A, B)
     Jeżeli rozmiar(A) == 1
         Zwróć A * B
 
+    S = kształt macierzy A
+
+    A = macierz A uzupełniona do parzystego kształtu
+    B = macierz B uzupełniona do parzystego kształtu
+
     środek = dzielenie_całkowite(rozmiar(A[0]), 2) 
     
     a11 = Wiersze od 0 do środek, Kolumny od 0 do środek z macierzy A
@@ -196,7 +215,11 @@ Funkcja Binet(A, B)
     c21=p2+p4
     c22=p1-p2+p3+p6
 
-    Zwróć macierz C złożoną z c11, c12, c21, c22
+    C = złóż macierz z c11, c12, c21, c22
+
+    C = macierz C przycięta do kształtu S
+
+    Zwróć macierz C2
 \end{minted}
 
 \subsection{Implementacja}
@@ -205,10 +228,17 @@ Algorytm Strassena również został zaimplementowany w języku Python:
 
 \begin{minted}[bgcolor=white]{python}
 def strassen(a,b):
-    n=np.size(a[0])
     
-    if n==1:
+    if np.size(a[0])==1:
         return a*b
+    
+    original_shape = a.shape
+    
+    a = pad_matrix_even(a)
+    b = pad_matrix_even(b)
+    
+    n = np.size(a[0])
+    
     mid=n//2
     
     a11=a[:mid,:mid]
@@ -233,7 +263,7 @@ def strassen(a,b):
     c21=p2+p4
     c22=p1-p2+p3+p6
 
-    return np.vstack((np.hstack((c11,c12)),np.hstack((c21,c22))))
+    return unpad_matrix(np.vstack((np.hstack((c11,c12)),np.hstack((c21,c22)))), original_shape)
 \end{minted}
 
 \section{Metoda AI}
@@ -454,80 +484,86 @@ C1 - C2 =
 
 \subsection{Zlliczanie liczby operacji zmiennoprzecinkowych}
 
-Zliczanie operacji zmiennoprzecinkowych osiągnęliśmy poprzez stworzenie typu danych dziedziczącego po float'cie i przeładowującego operacje arytmetyczne tak aby ich wywołania były zliczane. Z uwagi na wybrany sposób implementacji warunków zadania (tj. wypełnianie macierzy zerami, tak aby liczba wirszy i kolumn była równa najbliższej większej potędze dwójki), po zmierzeniu liczby FLOPS'ów otrzymaliśmy 9 róznych zestawów wartości dla algorytmu Binet'a, co zostało zaprezentowane w tabeli 1.
+Zliczanie operacji zmiennoprzecinkowych osiągnęliśmy poprzez stworzenie typu danych dziedziczącego po float'cie i przeładowującego operacje arytmetyczne tak aby ich wywołania były zliczane. W tabeli poniżej podaliśmy parę przykładowych wyników.
 
 \begin{table}[H]
     \centering
-    \begin{tabular}{|l|l|l|l|l|}
+     \begin{tabular}{|l|l|l|l|}
     \hline
-        Rozmiar macierzy & Mnożenia & Dodawania & Odejmowania & Dzielenia  \\ \hline
-        2 & 8 & 4 & 0 & 0  \\ \hline
-        4 & 64 & 48 & 0 & 0  \\ \hline
-        8 & 512 & 448 & 0 & 0  \\ \hline
-        16 & 4096 & 3840 & 0 & 0  \\ \hline
-        32 & 32768 & 31744 & 0 & 0  \\ \hline
-        64 & 262144 & 258048 & 0 & 0  \\ \hline
-        128 & 2097152 & 2080768 & 0 & 0  \\ \hline
-        256 & 16777216 & 16711680 & 0 & 0  \\ \hline
-        512 & 134217728 & 133955584 & 0 & 0 \\ \hline
+        Rozmiar macierzy & Mnożenia & Dodawania & Odejmowania \\ \hline
+        2 & 8 & 4 & 0  \\ \hline
+        15 & 3825 & 3825 & 0  \\ \hline
+        38 & 129960 & 165452 & 0  \\ \hline
+        50 & 195000 & 223100 & 0  \\ \hline
+        96 & 1474560 & 1760256 & 0  \\ \hline
+        175 & 10320625 & 12599825 & 0  \\ \hline
+        250 & 16375000 & 16564500 & 0 \\ \hline
     \end{tabular}
     \caption{Liczba poszczególnych operacji zmiennoprzecinkowych dla algorytmu Binet'a}
 \end{table}
 
 \noindent
-Na poniższym wykresie zaprezentowaliśmy sumaryczną liczbę operacji zmiennoprzecinkowych dla rozmiarów macierzy z zakresu od 1 do 512.
+Na poniższym wykresie zaprezentowaliśmy sumaryczną liczbę operacji zmiennoprzecinkowych dla rozmiarów macierzy z zakresu od 1 do 250
 
 \begin{figure}[H]
   \centering
-    \includegraphics[width=0.8\textwidth]{binet_flops.png}
+    \includegraphics[width=0.99\textwidth]{binet_flops.png}
   \caption{Sumaryczna liczba FLOPS'ów dla algorytmu Binet'a}
 \end{figure}
 
-Taką samą analizę przeprowadziliśmy dla algorytmu Strassen'a również otrzymując 9 unikalnych zestawów wartości, co widać w tabeli poniżej.
+\noindent
+Taką samą analizę przeprowadziliśmy dla algorytmu Strassen'a, co również widać w tabeli poniżej.
 
 \begin{table}[H]
     \centering
-    \begin{tabular}{|l|l|l|l|l|}
+    \begin{tabular}{|l|l|l|l|}
     \hline
-        Rozmiar macierzy & Mnożenia & Dodawania & Odejmowania & Dzielenia  \\ \hline
-        2 & 7 & 12 & 6 & 0  \\ \hline
-        4 & 49 & 132 & 66 & 0  \\ \hline
-        8 & 343 & 1116 & 558 & 0  \\ \hline
-        16 & 2401 & 8580 & 4290 & 0  \\ \hline
-        32 & 16807 & 63132 & 31566 & 0  \\ \hline
-        64 & 117649 & 454212 & 227106 & 0  \\ \hline
-        128 & 823543 & 3228636 & 1614318 & 0  \\ \hline
-        256 & 5764801 & 22797060 & 11398530 & 0  \\ \hline
-        512 & 40353607 & 160365852 & 80182926 & 0 \\ \hline
+        Rozmiar macierzy & Mnożenia & Dodawania & Odejmowania \\ \hline
+        2 & 7 & 12 & 6  \\ \hline
+        15 & 2400 & 8516 & 4226  \\ \hline
+        38 & 112308 & 342488 & 158392  \\ \hline
+        50 & 116802 & 416846 & 202298  \\ \hline
+        96 & 806736 & 2652256 & 1258900  \\ \hline
+        175 & 5618176 & 18202518 & 8574544  \\ \hline
+        250 & 5764696 & 22748640 & 11361804 \\ \hline
     \end{tabular}
     \caption{Liczba poszczególnych operacji zmiennoprzecinkowych dla algorytmu Strassen'a}
 \end{table}
 
 \noindent
-Ponownie sporządziliśmy wykres prezentujący sumaryczną liczbę FLOPS'ów dla macierzy o rozmiarach z zakresu od 1 do 512.
+Ponownie sporządziliśmy wykres prezentujący sumaryczną liczbę FLOPS'ów dla macierzy o rozmiarach z zakresu od 1 do 250.
 
 \begin{figure}[H]
   \centering
-    \includegraphics[width=0.8\textwidth]{images/strassen_flops.png}
+    \includegraphics[width=0.99\textwidth]{images/strassen_flops.png}
   \caption{Sumaryczna liczba FLOPS'ów dla algorytmu Strassen'a}
+\end{figure}
+
+\noindent
+Finalnie porównaliśmy liczbę mnożeń wykonanych przez algorytm Strassena i algorytm Binet'a. Wykres jasno pokazuje, że algorytm Strassena wykonuje znacznie mniej tych operacji od algorytmu Binet'a.
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[width=0.99\textwidth]{images/binet_strassen_mult.png}
+  \caption{Porównanie liczby mnożeń dla algorytmów Binet'a i Strassen'a}
 \end{figure}
 
 \subsection{Porównanie czasów działania}
 
-Jak widać czasy wykonania znów tworzą schodkowy wykres, co wynika z faktu uzupełniania macierzy zerami. Osiągane wartości są dość duże, dla rozmiarów 257 - 250 było to już ok. 50s. Na wykresie można zobaczyć pik czasu wykonania dla rozmiarów macierzy pomiędzy 150 do 200, najprawdopodobniej wynika on poprostu z większego obciążenia procesora w tym czasie (Całość liczyła się ok. 100 minut). 
+Na poniższym wykresie pokazany jest wykres czasów wykonania algorytmu Binet'a od rozmiarów macierzy z dodatkowo dopasowaną krzywą złożoności \(O(n^3)\). Jak widać czas działania w większości przypadków jest nieco dłuższy, wynika to z uzupełniania macierzy zerami.
 
 \begin{figure}[H]
   \centering
-    \includegraphics[width=0.8\textwidth]{images/binet_runtime.png}
+    \includegraphics[width=0.7\textwidth]{images/binet_runtime.png}
   \caption{Wykres czasu działania algorytmu Binet'a dla różnych rozmiarów macierzy}
 \end{figure}
 
 \noindent
-Podobnie sytuacja wygląda dla algorytmu Strassena, co widać na wykresie poniżej.
+Podobnie przedstawiliśmy wykres dla algorytmu Strassena, jednak tym razem dopasowaliśmy dwie krzywe. Jedną dla \(O(n^{2.81})\), a drugą dla \(O(n^3)\).
 
 \begin{figure}[H]
   \centering
-    \includegraphics[width=0.8\textwidth]{images/strassen_runtime.png}
+    \includegraphics[width=0.7\textwidth]{images/strassen_runtime.png}
   \caption{Wykres czasu działania algorytmu Strassen'a dla różnych rozmiarów macierzy}
 \end{figure}
 
@@ -542,7 +578,7 @@ Sporządziliśmy jeszcze jeden wykres prezentujący oba czasy działania na jedn
 
 \section{Oszacowanie złożoności obliczeniowej}
 
-Złożoność obliczeniową postanowiliśmy oszacować teoretycznie. Dla algorytmu Binét'a algorytm wykonuje 8 mnożeń na każdym etapie, a liczba podziałów wynosi \(log{2}[n]\), zatem liczba operacji wynosi \(8^{log{2}{n}} = n^3\). Jeśli chodzi o algorytm Strassena wykonuje on 7 mnożeń na każdym etapie, zatem złożoność wynosi \(7^{log{2}{n}} = n^{2.81}\).
+Złożoność obliczeniową postanowiliśmy oszacować także teoretycznie. Dla algorytmu Binét'a algorytm wykonuje 8 mnożeń na każdym etapie, a liczba podziałów wynosi \(log{2}[n]\), zatem liczba operacji wynosi \(8^{log{2}{n}} = n^3\). Jeśli chodzi o algorytm Strassena wykonuje on 7 mnożeń na każdym etapie, zatem złożoność wynosi \(7^{log{2}{n}} = n^{2.81}\).
 
 \section{Porównanie wyników z Octave}
 
@@ -572,6 +608,14 @@ Wyniki otrzymane tymi trzeba sposobami były identyczne. Zaobserwowaliśmy, że 
     \item Metoda mnożenia zaproponowana przez AI jest poprawna, jednak jej implementacja jest dość długa.
     \item Jednym z powodów dość powolnego mnożenia macierzy jest implementacja algorytmów w języku Python, prawdopodobnie dużo lepsze czasy uzyskalibyśmy implementując je w C.
     \item Octave nadaje się do mnożenia bardzo dużych macierzy.
+\end{enumerate}
+
+\section{Źródła}
+
+\begin{enumerate}
+    \item Wykład z kursu Algorytmy Macierzowe
+    \item https://en.wikipedia.org/wiki/Computational\_complexity\_of\_mathematical\_operations
+    \item https://deepmind.google/discover/blog/discovering-novel-algorithms-with-alphatensor/\#:\~:text=In\%20our\%20paper,\%20published\%20today\%20in\%20Nature,\%20we
 \end{enumerate}
 
 \end{document}
