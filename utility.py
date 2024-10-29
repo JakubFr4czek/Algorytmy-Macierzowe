@@ -7,8 +7,6 @@ epsilon = 1e-10
 
 
 def get_random_matrices_power_of_2(n=1):
-
-    # creating different size matrices, two of each with values in the open range (0.00000001, 1.0)
     matrices = []
     for i in range(n):
         matrices.append(
@@ -26,9 +24,6 @@ def get_random_matrices_power_of_2(n=1):
 
 
 def get_random_matrices_any_size(n=1):
-
-    # creating different size matrices, two of each with values in the open range (0.00000001, 1.0)
-
     matrices = []
     for i in range(n):
         matrices.append(
@@ -41,14 +36,18 @@ def get_random_matrices_any_size(n=1):
     return matrices
 
 
-def get_random_matrix_pair_any_size(n=1):
+def get_random_matrix_pair_any_size(n):
     return np.random.uniform(
         lower_bound + epsilon, upper_bound, (n, n)
     ), np.random.uniform(lower_bound + epsilon, upper_bound, (n, n))
 
+
+def get_random_matrix_any_size(n):
+    return np.random.uniform(lower_bound + epsilon, upper_bound, (n, n))
+
+
 def get_random_vector_any_size(n):
     return np.random.uniform(lower_bound + epsilon, upper_bound,n)
-
 
 
 def pad_matrix_even(m):
@@ -60,12 +59,14 @@ def pad_matrix_even(m):
 
     return m
 
+
 def matrice_vector_mult(m,v):
     res = np.zeros(m.shape[0])
     for i in range(m.shape[0]):
         for j in range(v.shape[0]):
             res[i]+=m[i,j]*v[j]
     return res
+
 
 def pad_vector_even(v):
 
@@ -90,9 +91,11 @@ def unpad_matrix(m, prev_shape):
     m = m[: prev_shape[0], : prev_shape[1]]
     return m
 
+
 def unpad_vector(v,prev_shape):
     v=v[:prev_shape[0]]
     return v
+
 
 def get_AI_matrices():
 
