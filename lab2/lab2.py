@@ -146,14 +146,14 @@ def recursive_determinant(a):
     return det
 
 
-size = 11
+#size = 11
 #A, _ = get_random_matrix_pair_any_size(size)
 
 #b = get_random_vector_any_size(size)
 
 #print(A, "\n", b, "\n")
 # A_inv = recursive_inverse(A)
-l, r = recursive_Gauss(A, b)
+#l, r = recursive_Gauss(A, b)
 #print(l, "\n", r, "\n")
 
 #print(np.linalg.solve(A,b),"\n",np.linalg.solve(l,r))
