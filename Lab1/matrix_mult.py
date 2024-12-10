@@ -1,12 +1,24 @@
 import numpy as np
-from utility import get_random_matrices, get_AI_matrices
+import sys
+import os
+
+# Dodaj ścieżkę katalogu wyżej (parent directory) do sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Teraz możesz zaimportować moduł z katalogu wyżej
+from utility import pad_matrix_even, unpad_matrix
 
 
 def binet(a,b):
-    n=np.size(a[0])
-    
-    if n==1:
+    if np.size(a[0])==1:
         return a*b
+    
+    original_shape = a.shape
+    
+    a = pad_matrix_even(a)
+    b = pad_matrix_even(b)
+    
+    n = np.size(a[0])
     mid=n//2
     
     a11=a[:mid,:mid]
@@ -23,14 +35,20 @@ def binet(a,b):
     c21=binet(a21, b11)+binet(a22, b21)
     c22=binet(a21, b12)+binet(a22, b22)
 
-    return np.vstack((np.hstack((c11,c12)),np.hstack((c21,c22))))
+    return unpad_matrix(np.vstack((np.hstack((c11,c12)),np.hstack((c21,c22)))), original_shape)
     
-
 def strassen(a,b):
-    n=np.size(a[0])
     
-    if n==1:
+    if np.size(a[0])==1:
         return a*b
+    
+    original_shape = a.shape
+    
+    a = pad_matrix_even(a)
+    b = pad_matrix_even(b)
+    
+    n = np.size(a[0])
+    
     mid=n//2
     
     a11=a[:mid,:mid]
@@ -55,7 +73,7 @@ def strassen(a,b):
     c21=p2+p4
     c22=p1-p2+p3+p6
 
-    return np.vstack((np.hstack((c11,c12)),np.hstack((c21,c22))))
+    return unpad_matrix(np.vstack((np.hstack((c11,c12)),np.hstack((c21,c22)))), original_shape)
 
 def ai_matrix_mult(a,b):
     a11=a[0,0]
